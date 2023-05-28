@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang='ja-JP'>
+<head>
+<style>
+textarea{
+	width: 15em;
+	height: 5em;
+}
+</style>
+</head>
+<body>
+<form>
+<button type='button' id='record'>録音</button>
+<br/>
+<textarea id='in'>
+</textarea>
+<br/>
+<button type='button' id='trans'>翻訳</button>
+<br/>
+<textarea id='out'>
+</textarea>
+<br/>
+<button type='button' id='speak'>発声</button>
+<br/>
+<select id='voices'>
+</select>
+<hr/>
+LOG<br/>
+<textarea id='log'>
+</textarea>
+</form>
+
+<script>
+const inText = document.querySelector('#in');
+const outText = document.querySelector('#out');
+const logText = document.querySelector('#log');
+
+const recordButton = document.querySelector('#record');
+const transButton = document.querySelector('#trans');
+const speakButton = document.querySelector('#speak');
+const voiceList = document.querySelector('#voices');
+
+window.speechRecognition = window.speechRecognition || window.webkitSpeechRecognition
+
+		const recog = new window.speechRecognition();
+		recog.lang = 'ja-JP';
+		recog.interimResults = true;
+		recog.continuous = true;
+
+		recog.addEventListener('start', (e) => {
+			logText.value = logText.value + `start\n`;
+		});
+
+		recog.addEventListener('end', (e) => {
+			logText.value = logText.value + `end\n`;
+			
+			transButton.click();
+			speakButton.click();
+		});
+
+		recog.addEventListener('audiostart', (e) => {
+			logText.value = logText.value + `audiostart\n`;
+		});
+
+		recog.addEventListener('audioend', (e) => {
+			logText.value = logText.value + `audioend\n`;
+		});
+
+		recog.addEventListener('soundstart', (e) => {
+			logText.value = logText.value + `soundstart\n`;
+		});
+
+		recog.addEventListener('soundend', (e) => {
+			logText.value = logText.value + `soundend\n`;
+		});
+
+		recog.addEventListener('speechstart', (e) => {
+			logText.value = logText.value + `speechstart\n`;
+		});
+
+		recog.addEventListener('speechend', (e) => {
+			logText.value = logText.value + `speechend\n`;
+		});
+
+		recog.addEventListener('result', (e) => {
+			logText.value = logText.value + `result:${e.resultIndex}\n`;
+			inText.value = '';
+
+			for (const result of e.results) {
+				for (const alternative of result) {
+					if (result.isFinal) {
+						inText.value = inText.value + `${alternative.transcript}\n`;
+					} else {
+						logText.value = logText.value + `${alternative.transcript}\n`;
+					}
+				};
+			};
+		});
+
+		recog.addEventListener('nomatch', (e) => {
+			logText.value = logText.value + `nomatch:${e.resultIndex}\n`;
+			inText.value = '';
+
+			for (const result of e.results) {
+				for (const alternative of result) {
+					if (result.isFinal) {
+						inText.value = inText.value + `${alternative.transcript}\n`;
+					} else {
+						logText.value = logText.value + `${alternative.transcript}\n`;
+					}
+				};
+			};
+		});
+
+		recog.addEventListener('error', (e) => {
+			logText.value = logText.value + `error:${e.error} ${e.message}\n`;
+		});
+
+	recordButton.addEventListener('click', (e) => {
+		e.preventDefault();
+
+		logText.value = '';
+
+		recog.start();
+	});
+
+
+	transButton.addEventListener('click', (e) => {
+		e.preventDefault();
+
+		outText.value = inText.value;
+	});
+
+const synth = window.speechSynthesis;
+
+		synth.addEventListener('voiceschanged', (e) => {
+			for (const voice of e.target.getVoices()) {
+				const option = document.createElement('option');
+				option.textContent = `${voice.localService ? 'LOCAL':'WEB'} ${voice.name} (${voice.lang})`;
+				option.voice = voice;
+				voiceList.appendChild(option);
+			}
+		});
+
+	speakButton.addEventListener('click', (e) => {
+		e.preventDefault();
+
+		if (synth.speaking)
+		{
+			synth.cancel();
+		}
+		
+		logText.value = '';
+
+		const utterance = new SpeechSynthesisUtterance(outText.value);
+		
+		utterance.addEventListener('start', (e) => {
+			logText.value = logText.value + `start:${e.name} ${e.charIndex} ${e.elapsedTime}\n`;
+		});
+
+		utterance.addEventListener('end', (e) => {
+			logText.value = logText.value + `end:${e.name} ${e.charIndex} ${e.elapsedTime}\n`;
+		});
+		
+		utterance.addEventListener('error', (e) => {
+			logText.value = logText.value + `error:${e.name} ${e.charIndex} ${e.elapsedTime} ${e.error}\n`;
+		});
+		
+		utterance.voice = voiceList.selectedOptions[0].voice;
+		utterance.pitch = 1;
+		utterance.rate = 1;
+		synth.speak(utterance);
+	});
+
+
+</script>
+</body>
+</html>
