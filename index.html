@@ -25,7 +25,7 @@ textarea{
 <select id='voices'>
 </select>
 <hr/>
-LOG<br/>
+LOG<button type='button' id='clear'>クリア</button><br/>
 <textarea id='log'>
 </textarea>
 </form>
@@ -39,6 +39,7 @@ const recordButton = document.querySelector('#record');
 const transButton = document.querySelector('#trans');
 const speakButton = document.querySelector('#speak');
 const voiceList = document.querySelector('#voices');
+const clearButton = document.querySelector('#clear');
 
 window.speechRecognition = window.speechRecognition || window.webkitSpeechRecognition
 
@@ -55,7 +56,6 @@ window.speechRecognition = window.speechRecognition || window.webkitSpeechRecogn
 			logText.value = logText.value + `end\n`;
 			
 			transButton.click();
-			speakButton.click();
 		});
 
 		recog.addEventListener('audiostart', (e) => {
@@ -118,29 +118,46 @@ window.speechRecognition = window.speechRecognition || window.webkitSpeechRecogn
 
 	recordButton.addEventListener('click', (e) => {
 		e.preventDefault();
-
 		logText.value = '';
-
 		recog.start();
 	});
-
 
 	transButton.addEventListener('click', (e) => {
 		e.preventDefault();
 
 		outText.value = inText.value;
+
+		speakButton.click();
 	});
 
 const synth = window.speechSynthesis;
+		{
+			const setupVoiceList = (target) => {
+				while(true) {
+					//リストをクリア
+					//TODO もっと良い方法？
+					const option = voiceList.getElementsByTagName('option')[0];
+					if (option) {
+						option.remove();
+					} else {
+						break;
+					}
+				}
 
-		synth.addEventListener('voiceschanged', (e) => {
-			for (const voice of e.target.getVoices()) {
-				const option = document.createElement('option');
-				option.textContent = `${voice.localService ? 'LOCAL':'WEB'} ${voice.name} (${voice.lang})`;
-				option.voice = voice;
-				voiceList.appendChild(option);
-			}
-		});
+				for (const voice of target.getVoices()) {
+					const option = document.createElement('option');
+					option.textContent = `${voice.localService ? 'LOCAL':'WEB'} ${voice.name} (${voice.lang})`;
+					option.voice = voice;
+					voiceList.appendChild(option);
+				}
+			};
+
+			synth.addEventListener('voiceschanged', (e) => {
+				setupVoiceList(e.target);
+			});
+
+			setupVoiceList(synth);
+		}
 
 	speakButton.addEventListener('click', (e) => {
 		e.preventDefault();
@@ -149,8 +166,6 @@ const synth = window.speechSynthesis;
 		{
 			synth.cancel();
 		}
-		
-		logText.value = '';
 
 		const utterance = new SpeechSynthesisUtterance(outText.value);
 		
@@ -172,6 +187,10 @@ const synth = window.speechSynthesis;
 		synth.speak(utterance);
 	});
 
+	clearButton.addEventListener('click', (e) => {
+		e.preventDefault();
+		logText.value = '';
+	});
 
 </script>
 </body>
