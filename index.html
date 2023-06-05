@@ -16,6 +16,7 @@ textarea{
 </textarea>
 <br/>
 <button type='button' id='trans'>翻訳</button>
+<input id='deeplkey'>
 <br/>
 <textarea id='out'>
 </textarea>
@@ -37,6 +38,7 @@ const logText = document.querySelector('#log');
 
 const recordButton = document.querySelector('#record');
 const transButton = document.querySelector('#trans');
+const deeplkeyText = document.querySelector('#deeplkey');
 const speakButton = document.querySelector('#speak');
 const voiceList = document.querySelector('#voices');
 const clearButton = document.querySelector('#clear');
@@ -122,12 +124,38 @@ window.speechRecognition = window.speechRecognition || window.webkitSpeechRecogn
 		recog.start();
 	});
 
-	transButton.addEventListener('click', (e) => {
+	transButton.addEventListener('click', async (e) => {
 		e.preventDefault();
 
-		outText.value = inText.value;
+		const api = 'https://api-free.deepl.com/v2/translate';
+		
+		const params = new URLSearchParams();
+		params.append('text', inText.value);
+		params.append('source_lang', 'JA');
+		params.append('target_lang', 'EN');
+		
+		try {
+			const response = await fetch(api, {
+				method: 'POST',
+				headers: {
+					'Authorization': 'DeepL-Auth-Key ' + deeplkeyText.value
+				},
+				body: params
+			});
+			
+			if (response.ok) {
+				const json = await response.json();
+				logText.value = logText.value + `${json}\n`;
 
-		speakButton.click();
+				outText.value = json.translations.text;
+
+				speakButton.click();
+			} else {
+				logText.value = logText.value + `${response}\n`;
+			}
+		} catch(e) {
+			logText.value = logText.value + `${e}\n`;
+		}
 	});
 
 const synth = window.speechSynthesis;
