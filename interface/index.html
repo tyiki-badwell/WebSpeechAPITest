@@ -125,6 +125,36 @@ window.speechRecognition = window.speechRecognition || window.webkitSpeechRecogn
 	transButton.addEventListener('click', async (e) => {
 		e.preventDefault();
 
+		const api = '/api/translate';
+		const data = {
+			text: inText.value,
+			source_lang: 'JA',
+			target_lang: 'EN'
+		};
+
+		try {
+			const response = await fetch(api, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(data)
+			});
+
+			if (response.ok) {
+				const json = await response.json();
+				logText.value = logText.value + `${json}\n`;
+
+				outText.value = json.translations.text;
+
+				speakButton.click();
+			} else {
+				logText.value = logText.value + `${response}\n`;
+			}
+		} catch(e) {
+			logText.value = logText.value + `${e}\n`;
+		}
+
 		outText.value = inText.value;
 	});
 
