@@ -2,13 +2,13 @@ module.exports = async function (context, req) {
     context.log('JavaScript HTTP trigger function processed a request.');
 
     const api = 'https://api-free.deepl.com/v2/translate';
-    const params = new URLSearchParams();
-    params.append('text', req.value);
-    params.append('source_lang', 'JA');
-    params.append('target_lang', 'EN');
-
     try {
-        const response = await fetch(api, {
+            const params = new URLSearchParams();
+            params.append('text', req.value);
+            params.append('source_lang', 'JA');
+            params.append('target_lang', 'EN');
+    
+            const response = await fetch(api, {
             method: 'POST',
             mode: 'cors',
             headers: {
